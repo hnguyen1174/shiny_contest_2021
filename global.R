@@ -18,6 +18,7 @@ if(!require(leaflet, quietly = TRUE)) install.packages('leaflet')
 if(!require(glue, quietly = TRUE)) install.packages('glue')
 if(!require(zeallot, quietly = TRUE)) install.packages('zeallot')
 if(!require(shinycssloaders, quietly = TRUE)) install.packages('shinycssloaders')
+if(!require(shinythemes, quietly = TRUE)) install.packages('shinythemes')
 
 library(tidyverse)         # Tidyverse
 library(shiny)             # Shiny - Loading shiny
@@ -26,4 +27,26 @@ library(leaflet)           # Mapping
 library(glue)              # Util function
 library(zeallot)           # Util function
 library(shinycssloaders)   # Spinner when waiting
+library(shinythemes)        # Shinythemes
+
+#####################################
+# LOADING DATA ######################
+#####################################
+
+source_dir <- '~/R'
+files_to_source <- file.path(source_dir, list.files(source_dir))
+map(files_to_source, source)
+
+most_recent_data <- get_most_recent_data()
+sf_nyc <- get_nyc_neighborhood_sf()
+
+# Population estimate by zip code
+pop_est <- sf_nyc %>% 
+  as_tibble() %>% 
+  select(ZIP_CODE, POP_EST) %>% 
+  mutate(POP_EST = as.numeric(POP_EST))
+
+
+
+
 
