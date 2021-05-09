@@ -2,8 +2,6 @@
 title: "Explore: Data Exploration"
 date: "2021-05-08"
 author: "Gary Nguyen"
-params:
-  get_data_from_api: FALSE
 ---
 
 ### 1. Set Up
@@ -12,13 +10,15 @@ params:
 library(tidyverse)
 library(glue)
 library(here)
+library(sf)
+library(plotly)
 ```
 
-```{r}
+```{r load_all_func}
 devtools::load_all()
 ```
 
-```{r}
+```{r base_dir}
 base_dir <- here::here()
 ```
 
@@ -42,55 +42,98 @@ For more information about ZCTAs, visit https://www.census.gov/programs-surveys/
 6. `ili_pne_admissions`: count of influenza-like illness and/or pnuemonia emergency department visits that resulted in hospital admission
 
 ```{r load_data}
-if (params$get_data_from_api) {
-  data <- readr::read_csv('https://data.cityofnewyork.us/resource/2nwg-uqyg.csv?$limit=20000000')
-  saveRDS(data, file.path(base_dir, 'data/20210508_most_recent_data.rds'))
-} else {
-  data <- readRDS(file.path(base_dir, 'data/20210508_most_recent_data.rds'))
-}
+most_recent_data <- get_most_recent_data()
 ```
 
-```{r}
-get_most_recent_data <- function(data) {
+### 3. Get Shapefile and Visualize Population Estimation
+
+```{r pop_est_vis}
+sf_nyc <- get_nyc_neighborhood_sf()
+
+p <- sf_nyc %>% 
+  ggplot(aes(label = ZIP_CODE)) +
+  geom_sf(aes(fill = POP_EST), lwd = 0) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_fill_viridis_d()
   
-  most_recent_date <- data %>% 
-    pull(extract_date) %>% max()
-  
-  most_recent_data <- data %>% 
-    filter(extract_date == most_recent_date) %>% 
-    select(date, mod_zcta, total_ed_visits, ili_pne_visits, ili_pne_admissions) %>% 
-    dplyr::rename(DATE = date,
-                  ZIP_CODE = mod_zcta, 
-                  ER_VISIT = total_ed_visits,
-                  ILI_VISIT = ili_pne_visits,
-                  ILI_ADMIT = ili_pne_admissions) %>% 
-    mutate(DATE = as.Date(DATE), 
-           ZIP_CODE = as.character(ZIP_CODE))
-  
-  most_recent_data
-}
+ggplotly(p)
 ```
 
-```{r}
-data %>% 
-  group_by(mod_zcta) %>% 
-  tally() %>% 
-  arrange(desc(n))
+### 4. Visualize Total ILI Visits from `2020-03-01` to `2021-05-06`
+
+#### 4.1. Visualize Total ILI Visits
+
+```{r total_ili_visits}
+total_ili_visits_by_zip <- most_recent_data %>% 
+  group_by(ZIP_CODE) %>% 
+  summarize(TOTAL_ILI_VISIT = sum(ILI_VISIT)) %>% 
+  ungroup()
 ```
 
-```{r}
-library(sf)
+```{r vis_total_ili_visits}
+p2 <- sf_nyc %>%
+  left_join(total_ili_visits_by_zip, by = 'ZIP_CODE') %>% 
+  mutate(TOTAL_ILI_VISIT = replace_na(TOTAL_ILI_VISIT, 0)) %>% 
+  ggplot(aes(label = ZIP_CODE)) +
+  geom_sf(aes(fill = TOTAL_ILI_VISIT), lwd = 0) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_fill_viridis_c()
 
-
-sf <- read_sf('https://data.cityofnewyork.us/resource/pri4-ifjk.geojson')
+ggplotly(p2)
 ```
 
+#### 4.2. Visualize Total ILI Visits per Population
 
+```{r total_ili_visits_per_1000_pt}
+pop_est <- sf_nyc %>% 
+  as_tibble() %>% 
+  select(ZIP_CODE, POP_EST) %>% 
+  mutate(POP_EST = as.numeric(POP_EST))
 
+total_ili_visits_per_pop_by_zip <- most_recent_data %>% 
+  left_join(pop_est, by = 'ZIP_CODE') %>% 
+  mutate(ILI_VISIT_PER_1000_PT = ILI_VISIT*1000/POP_EST) %>% 
+  group_by(ZIP_CODE) %>% 
+  summarize(TOTAL_ILI_VISIT_PER_1000_PT = sum(ILI_VISIT_PER_1000_PT)) %>% 
+  ungroup()
+```
 
+```{r vis_total_ili_visits_per_1000_pt}
+p3 <- sf_nyc %>%
+  left_join(total_ili_visits_per_pop_by_zip, by = 'ZIP_CODE') %>% 
+  mutate(TOTAL_ILI_VISIT_PER_1000_PT = replace_na(TOTAL_ILI_VISIT_PER_1000_PT, 0)) %>% 
+  ggplot(aes(label = ZIP_CODE)) +
+  geom_sf(aes(fill = TOTAL_ILI_VISIT_PER_1000_PT), lwd = 0) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_fill_viridis_c()
 
+ggplotly(p3)
+```
 
+#### 4.3. Visualize Total ILI Visits per Population
 
+```{r total_er_visits_per_1000_pt}
+total_er_visits_per_pop_by_zip <- most_recent_data %>% 
+  left_join(pop_est, by = 'ZIP_CODE') %>% 
+  mutate(ER_VISIT_PER_1000_PT = ER_VISIT*1000/POP_EST) %>% 
+  group_by(ZIP_CODE) %>% 
+  summarize(TOTAL_ER_VISIT_PER_1000_PT = sum(ER_VISIT_PER_1000_PT)) %>% 
+  ungroup()
+```
 
+```{r vis_total_er_visits_per_1000_pt}
+p4 <- sf_nyc %>%
+  left_join(total_er_visits_per_pop_by_zip, by = 'ZIP_CODE') %>% 
+  mutate(TOTAL_ER_VISIT_PER_1000_PT = replace_na(TOTAL_ER_VISIT_PER_1000_PT, 0)) %>% 
+  ggplot(aes(label = ZIP_CODE)) +
+  geom_sf(aes(fill = TOTAL_ER_VISIT_PER_1000_PT), lwd = 0) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_fill_viridis_c()
 
+ggplotly(p4)
+```
 

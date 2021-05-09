@@ -40,4 +40,4 @@ vignettes/*.pdf
 
 # Avoid commit the data folder because of size
 data/
-
+.DS_Store
