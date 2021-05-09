@@ -1,0 +1,20 @@
+Package: ShinyContest2021
+Title: Shiny Contest 2021
+Version: 0.1
+Authors@R:
+  person(given = "Applied Data Science",
+         role = c("aut", "cre"),
+         email = "zzPDL_HAD_SA_Core@mskcc.org")
+Description: This repo contains codes for the shiny contest 2021.
+License: MIT + file LICENSE
+Imports:
+  dplyr,
+  tictoc,
+  readr,
+  glue,
+  here
+Encoding: UTF-8
+Language: en-US
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1

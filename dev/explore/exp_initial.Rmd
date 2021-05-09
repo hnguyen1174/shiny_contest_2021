@@ -1,0 +1,96 @@
+---
+title: "Explore: Data Exploration"
+date: "2021-05-08"
+author: "Gary Nguyen"
+params:
+  get_data_from_api: FALSE
+---
+
+### 1. Set Up
+
+```{r setup}
+library(tidyverse)
+library(glue)
+library(here)
+```
+
+```{r}
+devtools::load_all()
+```
+
+```{r}
+base_dir <- here::here()
+```
+
+### 2. Load Data from API
+
+Columns:
+
+1. `extract_date`: date of data extraction
+
+**Disclaimer:**
+The extract_date column can be used to evaluate how data changed over time. To analyze the most current data, only use the latest extract date. This dataset preserves historical records and source data changes, so each extract date reflects the current copy of the data as of that date. For example, an extract date of 5/1/2020 and extract date of 5/2/2020 will both contain all records as they were as of that extract date. Without filtering or grouping by extract date, an analysis will almost certainly be miscalculating or counting the same values multiple times.
+
+2. `date`: date of emergency visit
+3. `mod_zcta`: modified zip code tabulation area
+
+**Disclaimer:**
+For more information about ZCTAs, visit https://www.census.gov/programs-surveys/geography/guidance/geo-areas/zctas.html. Modified ZCTA combines census blocks with smaller populations to allow more stable estimates of population size for calculating case rates at the ZIP code level. A shapefile and documentation for modified ZCTAs can be found at https://data.cityofnewyork.us/dataset/Modified-Zip-Code-Tabulation-Areas-MODZCTA-/pri4-ifjk
+
+4. `total_ed_visits`:	count of all emergency department visits
+5. `ili_pne_visits`: count of influenza-like illness and/or pnuemonia emergency department visits
+6. `ili_pne_admissions`: count of influenza-like illness and/or pnuemonia emergency department visits that resulted in hospital admission
+
+```{r load_data}
+if (params$get_data_from_api) {
+  data <- readr::read_csv('https://data.cityofnewyork.us/resource/2nwg-uqyg.csv?$limit=20000000')
+  saveRDS(data, file.path(base_dir, 'data/20210508_most_recent_data.rds'))
+} else {
+  data <- readRDS(file.path(base_dir, 'data/20210508_most_recent_data.rds'))
+}
+```
+
+```{r}
+get_most_recent_data <- function(data) {
+  
+  most_recent_date <- data %>% 
+    pull(extract_date) %>% max()
+  
+  most_recent_data <- data %>% 
+    filter(extract_date == most_recent_date) %>% 
+    select(date, mod_zcta, total_ed_visits, ili_pne_visits, ili_pne_admissions) %>% 
+    dplyr::rename(DATE = date,
+                  ZIP_CODE = mod_zcta, 
+                  ER_VISIT = total_ed_visits,
+                  ILI_VISIT = ili_pne_visits,
+                  ILI_ADMIT = ili_pne_admissions) %>% 
+    mutate(DATE = as.Date(DATE), 
+           ZIP_CODE = as.character(ZIP_CODE))
+  
+  most_recent_data
+}
+```
+
+```{r}
+data %>% 
+  group_by(mod_zcta) %>% 
+  tally() %>% 
+  arrange(desc(n))
+```
+
+```{r}
+library(sf)
+
+
+sf <- read_sf('https://data.cityofnewyork.us/resource/pri4-ifjk.geojson')
+```
+
+
+
+
+
+
+
+
+
+
