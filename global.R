@@ -19,6 +19,8 @@ if(!require(glue, quietly = TRUE)) install.packages('glue')
 if(!require(zeallot, quietly = TRUE)) install.packages('zeallot')
 if(!require(shinycssloaders, quietly = TRUE)) install.packages('shinycssloaders')
 if(!require(shinythemes, quietly = TRUE)) install.packages('shinythemes')
+if(!require(sf, quietly = TRUE)) install.packages('sf')
+if(!require(plotly, quietly = TRUE)) install.packages('plotly')
 
 library(tidyverse)         # Tidyverse
 library(shiny)             # Shiny - Loading shiny
@@ -27,14 +29,17 @@ library(leaflet)           # Mapping
 library(glue)              # Util function
 library(zeallot)           # Util function
 library(shinycssloaders)   # Spinner when waiting
-library(shinythemes)        # Shinythemes
+library(shinythemes)       # Shinythemes
+library(sf)                # Shapefile
+library(plotly)            # Plotly
 
 #####################################
 # LOADING DATA ######################
 #####################################
 
-source_dir <- '~/R'
+source_dir <- 'R'
 files_to_source <- file.path(source_dir, list.files(source_dir))
+print(files_to_source)
 map(files_to_source, source)
 
 most_recent_data <- get_most_recent_data()

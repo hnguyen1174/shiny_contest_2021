@@ -1,0 +1,14 @@
+name: shiny_contest_2021
+title: shiny_contest_2021
+username:
+account: garynguyen1174
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4192167
+bundleId: 4644993
+url: https://garynguyen1174.shinyapps.io/shiny_contest_2021/
+when: 1622089572.63603
+lastSyncTime: 1622089572.63605
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rbuildignore|data/geo_export_3a248c30-395e-495f-be45-1e9e7f1da32f.shp|DESCRIPTION|dev/explore/exp_initial.Rmd|LICENSE|man/get_most_recent_data.Rd|man/get_nyc_neighborhood_sf.Rd|man/prc_most_recent_data.Rd|man/qry_data_from_api.Rd|NAMESPACE|README.md
